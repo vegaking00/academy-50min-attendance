@@ -233,12 +233,32 @@ export default function App() {
     });
   };
 
+  const getNextStudentNumber = (students) => {
+    let maxNum = 0;
+    for (const s of students) {
+      const m = /^S-(\d+)$/.exec(s.id || '');
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+    }
+    return Math.max(maxNum, students.length);
+  };
+
   const handleAddStudent = (e) => {
     e.preventDefault();
     const trimmed = newName.trim();
     if (!trimmed) return;
+
+    const dupExists = appState.students.some(
+      (s) => s.name.trim().toLowerCase() === trimmed.toLowerCase() && s.group === newGroup
+    );
+    if (dupExists) {
+      const ok = window.confirm(
+        `[${newGroup}] 반에 '${trimmed}' 학생이 이미 등록되어 있습니다.\n동명이인으로 추가할까요?`
+      );
+      if (!ok) return;
+    }
+
     persist((prev) => {
-      const nextNum = prev.students.length + 1;
+      const nextNum = getNextStudentNumber(prev.students) + 1;
       const id = 'S-' + String(nextNum).padStart(3, '0');
       return {
         ...prev,
@@ -259,25 +279,68 @@ export default function App() {
       .filter(Boolean);
     if (!lines.length) return;
 
-    persist((prev) => {
-      let counter = prev.students.length;
-      const imported = lines.map((line) => {
-        const [rawName, rawGroup, rawMin] = line.split(/[,\t]/).map((v) => v?.trim());
-        counter += 1;
-        return {
-          id: 'S-' + String(counter).padStart(3, '0'),
-          name: rawName || `학생${counter}`,
-          group: GROUPS.includes(rawGroup) ? rawGroup : rawGroup || '초등저',
-          defaultMinutes: parseInt(rawMin, 10) || 50,
-        };
+    const existingKeys = new Set(
+      appState.students.map((s) => `${s.name.trim().toLowerCase()}|${s.group}`)
+    );
+
+    let counter = getNextStudentNumber(appState.students);
+    const imported = [];
+    let skippedDupCount = 0;
+
+    for (const line of lines) {
+      const [rawName, rawGroup, rawMin] = line.split(/[,\t]/).map((v) => v?.trim());
+      if (!rawName) continue;
+      const group = GROUPS.includes(rawGroup) ? rawGroup : rawGroup || '초등저';
+      const key = `${rawName.toLowerCase()}|${group}`;
+
+      if (existingKeys.has(key)) {
+        skippedDupCount += 1;
+        continue;
+      }
+      existingKeys.add(key);
+      counter += 1;
+      imported.push({
+        id: 'S-' + String(counter).padStart(3, '0'),
+        name: rawName,
+        group,
+        defaultMinutes: parseInt(rawMin, 10) || 50,
       });
-      return {
+    }
+
+    if (imported.length > 0) {
+      persist((prev) => ({
         ...prev,
         students: [...imported, ...prev.students],
-      };
-    });
+      }));
+    }
+
     setCsvText('');
     setShowCsvModal(false);
+
+    if (skippedDupCount > 0 && imported.length === 0) {
+      window.alert(`모두 이미 등록된 학생입니다. (중복 ${skippedDupCount}명 제외)`);
+    } else if (skippedDupCount > 0) {
+      window.alert(
+        `총 ${lines.length}명 중 ${imported.length}명 추가 완료!\n(중복 ${skippedDupCount}명은 자동으로 제외되었습니다)`
+      );
+    } else {
+      window.alert(`${imported.length}명 일괄 등록 완료!`);
+    }
+  };
+
+  const handleClearAllStudents = () => {
+    if (
+      !window.confirm(
+        '등록된 모든 학생 명단과 현재 진행 중인 타이머를 비우시겠습니까?\n(오늘 하원 기록은 유지됩니다)'
+      )
+    ) {
+      return;
+    }
+    persist((prev) => ({
+      ...prev,
+      students: [],
+      activeSessions: [],
+    }));
   };
 
   const handleDeleteStudent = (id) => {
@@ -704,16 +767,24 @@ export default function App() {
             {/* Tab 3: Minimal-Info Student Management */}
             {rightTab === 'students' && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="text-xs text-slate-500">
                     등록된 학생 {appState.students.length}명 (고유번호·이름·반만 저장)
                   </span>
-                  <button
-                    onClick={handleResetSamples}
-                    className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> 200명 예시 초기화
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleClearAllStudents}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> 전체 명단 비우기
+                    </button>
+                    <button
+                      onClick={handleResetSamples}
+                      className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> 200명 예시 초기화
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-1.5 max-h-[520px] overflow-y-auto pr-1">
                   {appState.students.slice(0, 100).map((s) => (
