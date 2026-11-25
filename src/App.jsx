@@ -71,6 +71,9 @@ export default function App() {
   const [groupFilter, setGroupFilter] = useState('전체');
   const [rightTab, setRightTab] = useState('active'); // 'active' | 'history' | 'students'
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [syncMode, setSyncMode] = useState(
+    isFirebaseConfigured ? 'firebase' : 'local'
+  );
   const [syncError, setSyncError] = useState('');
 
   // Modals
@@ -96,7 +99,8 @@ export default function App() {
       },
       (err) => {
         setSyncError(err?.message || '동기화 오류');
-      }
+      },
+      (mode) => setSyncMode(mode)
     );
     return () => unsub();
   }, []);
@@ -324,9 +328,13 @@ export default function App() {
               <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
                 🎨 리더스아트 50분 출석부
               </h1>
-              {isFirebaseConfigured ? (
+              {syncMode === 'wifi-server' ? (
                 <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-                  <Wifi className="w-3.5 h-3.5" /> 실시간 패드 동기화 중
+                  <Wifi className="w-3.5 h-3.5" /> 학원 와이파이 서버 연결됨
+                </span>
+              ) : syncMode === 'firebase' ? (
+                <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                  <Wifi className="w-3.5 h-3.5" /> 실시간 클라우드 동기화 중
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
