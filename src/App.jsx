@@ -474,8 +474,8 @@ export default function App() {
 
         {/* Main 2-Column Dashboard */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Left: Quick Check-in (200 Students) */}
-          <section className="lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+          {/* Left on Desktop / Second on Mobile: Quick Check-in (200 Students) */}
+          <section className="order-2 lg:order-1 lg:col-span-5 bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
                 ⚡ 빠른 등원 체크 (전체 {appState.students.length}명)
@@ -510,7 +510,7 @@ export default function App() {
               ))}
             </div>
 
-            <div className="space-y-1.5 max-h-[520px] overflow-y-auto pr-1">
+            <div className="space-y-1.5 max-h-[280px] lg:max-h-[520px] overflow-y-auto pr-1">
               {filteredStudents.length === 0 ? (
                 <div className="text-xs text-slate-400 text-center py-10">
                   검색 결과가 없습니다.
@@ -533,13 +533,13 @@ export default function App() {
                         <span className="text-xs text-slate-500">{s.group}</span>
                       </div>
                       {isActive ? (
-                        <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
+                        <span className="text-xs px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium whitespace-nowrap">
                           수업 중
                         </span>
                       ) : (
                         <button
                           onClick={() => handleCheckIn(s)}
-                          className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:scale-95 transition"
+                          className="text-xs px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:scale-95 transition whitespace-nowrap"
                         >
                           등원 ({s.defaultMinutes || 50}분)
                         </button>
@@ -556,13 +556,13 @@ export default function App() {
             </div>
           </section>
 
-          {/* Right: Active Timers / History / Students */}
-          <section className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+          {/* Right on Desktop / First on Mobile: Active Timers / History / Students */}
+          <section className="order-1 lg:order-2 lg:col-span-7 bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto">
                 <button
                   onClick={() => setRightTab('active')}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition ${
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                     rightTab === 'active'
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -572,7 +572,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setRightTab('history')}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition ${
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                     rightTab === 'history'
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -582,7 +582,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setRightTab('students')}
-                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition ${
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition whitespace-nowrap ${
                     rightTab === 'students'
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-600 hover:bg-slate-100'
